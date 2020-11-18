@@ -256,6 +256,9 @@ func init() {
 	flags.StringSlice(option.DebugVerbose, []string{}, "List of enabled verbose debug groups")
 	option.BindEnv(option.DebugVerbose)
 
+	flags.Bool(option.EnableDebugPolicy, false, "Enable debug policy log messages")
+	option.BindEnv(option.EnableDebugPolicy)
+
 	flags.StringP(option.Device, "d", "undefined", "Device facing cluster/external network for direct L3 (non-overlay mode)")
 	option.BindEnv(option.Device)
 
@@ -1007,6 +1010,7 @@ func initEnv(cmd *cobra.Command) {
 
 	option.Config.Opts.SetBool(option.Debug, option.Config.Debug)
 	option.Config.Opts.SetBool(option.DebugLB, option.Config.Debug)
+	option.Config.Opts.SetBool(option.DebugPolicy, option.Config.Debug)
 	option.Config.Opts.SetBool(option.DropNotify, true)
 	option.Config.Opts.SetBool(option.TraceNotify, true)
 	option.Config.Opts.SetBool(option.PolicyTracing, option.Config.EnableTracing)

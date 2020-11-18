@@ -129,6 +129,9 @@ const (
 	// DebugVerbose is the argument enables verbose log message for particular subsystems
 	DebugVerbose = "debug-verbose"
 
+	// EnableDebugPolicy is the argument to enable verbose log messages for policy updates
+	EnableDebugPolicy = "enable-debug-policy"
+
 	// Device facing cluster/external network for direct L3 (non-overlay mode)
 	Device = "device"
 
@@ -1158,6 +1161,7 @@ type DaemonConfig struct {
 	ConfigDir                     string
 	Debug                         bool
 	DebugVerbose                  []string
+	EnableDebugPolicy             bool
 	DisableConntrack              bool
 	DisableK8sServices            bool
 	EnableHostReachableServices   bool
@@ -1908,6 +1912,7 @@ func (c *DaemonConfig) Populate() {
 	c.ClusterMeshConfig = viper.GetString(ClusterMeshConfigName)
 	c.DatapathMode = viper.GetString(DatapathMode)
 	c.Debug = viper.GetBool(DebugArg)
+	c.EnableDebugPolicy = viper.GetBool(EnableDebugPolicy)
 	c.DebugVerbose = viper.GetStringSlice(DebugVerbose)
 	c.Device = viper.GetString(Device)
 	c.DisableConntrack = viper.GetBool(DisableConntrack)
