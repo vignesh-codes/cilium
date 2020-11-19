@@ -29,6 +29,7 @@ import (
 	"github.com/cilium/cilium/pkg/hubble/parser/getters"
 	"github.com/cilium/cilium/pkg/identity"
 	"github.com/cilium/cilium/pkg/lock"
+	"github.com/cilium/cilium/pkg/logging/logfields"
 	"github.com/cilium/cilium/pkg/monitor"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 
@@ -271,7 +272,29 @@ func (p *Parser) resolveEndpoint(ip net.IP, securityIdentity uint32) *pb.Endpoin
 	var namespace, podName string
 	if p.ipGetter != nil {
 		if ipIdentity, ok := p.ipGetter.LookupSecIDByIP(ip); ok {
-			securityIdentity = uint32(ipIdentity.ID)
+			// This checks that we do not overwrite the numeric security
+			// identity provided by the datapath trace point. Only if the
+			// datapath did not provide an identity (i.e. in FROM_LXC trace
+			// points) do we want to fall back on the identity from the
+			// user-space IPCache.
+			// The datapath identity and the identity returned by LookupSecIDByIP
+			// may differ if the identity has changed between the time the
+			// trace event has been generated and the time this code is reached.
+			// By preserving what the datapath originally observed, we ensure
+			// that we have the same information as the datapath had when it
+			// made the policy decision for this flow.
+			numericIdentity := uint32(ipIdentity.ID)
+			if securityIdentity == 0 {
+				securityIdentity = numericIdentity
+			}
+
+			if securityIdentity != numericIdentity {
+				p.log.WithFields(logrus.Fields{
+					logfields.Identity:    numericIdentity,
+					logfields.OldIdentity: securityIdentity,
+					logfields.IPAddr:      ip,
+				}).Debugf("stale identity observed")
+			}
 		}
 		if meta := p.ipGetter.GetK8sMetadata(ip); meta != nil {
 			namespace, podName = meta.Namespace, meta.PodName
